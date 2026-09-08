@@ -1,0 +1,47 @@
+.resize-handle {
+  flex-shrink: 0;
+  position: relative;
+  background: transparent;
+  z-index: 5;
+}
+
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  background: var(--color-border-default);
+  transition: background 150ms;
+  pointer-events: none;
+}
+
+.resize-handle-col {
+  width: 4px;
+  cursor: col-resize;
+  margin: 0 -2px;
+}
+
+.resize-handle-col::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.resize-handle-row {
+  height: 4px;
+  cursor: row-resize;
+  margin: -2px 0;
+}
+
+.resize-handle-row::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.resize-handle:hover::after,
+.resize-handle:active::after {
+  background: var(--color-border-strong);
+}

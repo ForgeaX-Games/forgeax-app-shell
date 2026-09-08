@@ -1,0 +1,35 @@
+.fx-dock-tab-status-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 100%;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.fx-dock-tab-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-dock-tab-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 11px;
+  height: 11px;
+  font-size: 11px;
+  line-height: 11px;
+  transform: translateY(1.5px);
+}
+
+.fx-dock-tab-status-value {
+  display: inline-flex;
+  align-items: center;
+  height: 11px;
+  line-height: 11px;
+}

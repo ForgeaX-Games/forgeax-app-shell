@@ -1,0 +1,75 @@
+{
+  "name": "@forgeax/app-shell",
+  "version": "0.88.0",
+  "description": "Generic Dock, Panel, Window, and Slot composition primitives",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": ["./dist/resize.css", "./dist/panel.css", "./dist/detached.css", "./dist/surface.css", "./dist/dock-tab.css"],
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./dock": {
+      "types": "./dist/dock.d.ts",
+      "import": "./dist/dock.js"
+    },
+    "./window": {
+      "types": "./dist/window.d.ts",
+      "import": "./dist/window.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
+    },
+    "./application": {
+      "types": "./dist/application.d.ts",
+      "import": "./dist/application.js"
+    },
+    "./resize.css": "./dist/resize.css",
+    "./panel.css": "./dist/panel.css",
+    "./detached.css": "./dist/detached.css",
+    "./surface.css": "./dist/surface.css",
+    "./dock-tab.css": "./dist/dock-tab.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test test",
+    "build": "tsup src/index.ts src/dock.ts src/window.ts src/react.tsx src/application.tsx --format esm --dts --outDir dist --external react --external react-dom && bun run scripts/copy-resize-css.ts && bun run scripts/copy-panel-css.ts && bun run scripts/copy-detached-surface-css.ts && bun run scripts/copy-surface-css.ts && bun run scripts/copy-dock-tab-css.ts",
+    "check": "bun run typecheck && bun run test && bun run build",
+    "release:preflight": "bun run scripts/release-preflight.ts"
+  },
+  "dependencies": {
+    "@forgeax/extension-contracts": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "bun-types": "^1.3.14",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ForgeaX-Games/forgeax-app-shell.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ForgeaX-Games/forgeax-app-shell/issues"
+  },
+  "homepage": "https://github.com/ForgeaX-Games/forgeax-app-shell#readme",
+  "packageManager": "bun@1.3.14"
+}

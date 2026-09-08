@@ -1,0 +1,20 @@
+.fx-detached-surface,
+.fx-detached-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.fx-detached-surface > *,
+.fx-detached-panel > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.fx-detached-surface-status-text[data-tone="neutral"] {
+  color: #888;
+}
+
+.fx-detached-surface-status-text[data-tone="error"] {
+  color: #c44;
+}
