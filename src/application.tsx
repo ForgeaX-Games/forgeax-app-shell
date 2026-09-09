@@ -9,6 +9,8 @@ import {
   type RefObject,
 } from 'react';
 import type { DetachedWindowCapability } from './window';
+export { createPanelActionRegistry, type PanelActionRegistry } from './panel-action-registry';
+export { createPanelControlRegistry, type PanelControlRegistry } from './panel-control-registry';
 import type { ApplicationShortcutRegistry } from './application-shortcuts';
 import type { ApplicationMenuRegistry, ApplicationMenuItem } from './application-menus';
 

@@ -1,0 +1,51 @@
+import { expect, test } from 'bun:test';
+import { createPanelActionRegistry, createPanelControlRegistry } from '../src/application';
+
+test('panel actions preserve synchronous reads, stable sorting, cache and batched versions', async () => {
+  const registry = createPanelActionRegistry();
+  let notifications = 0;
+  const unsubscribe = registry.onChange(() => notifications++);
+  const first = { id: 'first', panelId: 'p', command: 'one', order: 2 };
+  const second = { id: 'second', panelId: 'q', command: 'two' };
+  const third = { id: 'third', panelId: 'p', command: 'three', order: 2 };
+  const remove = registry.contribute('owner', [first, second]);
+  const removeOther = registry.contribute('owner', [third]);
+  expect(registry.all()).toEqual([second, first, third]);
+  expect(registry.all()).toBe(registry.all());
+  expect(registry.list('p')).toEqual([first, third]);
+  expect(registry.version()).toBe(0);
+  expect(notifications).toBe(0);
+  await Promise.resolve();
+  expect(registry.version()).toBe(1);
+  expect(notifications).toBe(1);
+  remove();
+  remove();
+  expect(registry.all()).toEqual([third]);
+  await Promise.resolve();
+  expect(registry.version()).toBe(2);
+  unsubscribe();
+  removeOther();
+  await Promise.resolve();
+  expect(registry.all()).toEqual([]);
+  expect(notifications).toBe(2);
+});
+
+test('controls preserve first match, reference identity and batch-scoped disposal', async () => {
+  const registry = createPanelControlRegistry();
+  const first = { id: 'same', render: () => null };
+  const second = { id: 'same', render: () => null };
+  let notifications = 0;
+  registry.onChange(() => notifications++);
+  const remove = registry.contribute('owner', [first]);
+  registry.contribute('owner', [second]);
+  expect(registry.get('same')).toBe(first);
+  expect(registry.list()).toEqual([first, second]);
+  remove();
+  remove();
+  expect(registry.get('same')).toBe(second);
+  expect(registry.get('absent')).toBeUndefined();
+  expect(notifications).toBe(0);
+  await Promise.resolve();
+  expect(registry.version()).toBe(1);
+  expect(notifications).toBe(1);
+});
