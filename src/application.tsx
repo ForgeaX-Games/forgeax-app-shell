@@ -13,6 +13,13 @@ export { createPanelActionRegistry, type PanelActionRegistry } from './panel-act
 export { createPanelControlRegistry, type PanelControlRegistry } from './panel-control-registry';
 import type { ApplicationShortcutRegistry } from './application-shortcuts';
 import type { ApplicationMenuRegistry, ApplicationMenuItem } from './application-menus';
+import type { ApplicationRuntimeOwner } from './application-runtime-owner';
+export {
+  createApplicationRuntimeOwner,
+  ApplicationStartupCleanupError,
+  type ApplicationRuntimeOwner,
+  type ApplicationShutdownSnapshot,
+} from './application-runtime-owner';
 
 export {
   createApplicationMenuRegistry,
@@ -575,6 +582,8 @@ export interface ApplicationRuntime<Host extends AppHost = AppHost> {
 }
 
 export interface ApplicationRuntimeRootProps<Runtime extends ApplicationRuntime> {
+  /** Product-owned above this replaceable subtree; retains incomplete shutdown. */
+  readonly owner?: ApplicationRuntimeOwner;
   readonly start: () => Promise<Runtime>;
   readonly onReady?: (runtime: Runtime) => void;
   readonly fallback?: ReactNode;
@@ -603,6 +612,7 @@ function disposeApplicationRuntime(runtime: ApplicationRuntime): void {
  * application context.
  */
 export function ApplicationRuntimeRoot<Runtime extends ApplicationRuntime>({
+  owner,
   start,
   onReady,
   fallback = null,
@@ -614,6 +624,23 @@ export function ApplicationRuntimeRoot<Runtime extends ApplicationRuntime>({
     let active = true;
     let owned: Runtime | null = null;
     setState({ status: 'starting' });
+
+    if (owner) {
+      const lease = owner.acquire(start);
+      void lease.ready.then((runtime) => {
+        if (!active) return;
+        try {
+          onReady?.(runtime);
+          setState({ status: 'ready', runtime });
+        } catch (error) {
+          lease.release();
+          setState({ status: 'failed', error });
+        }
+      }).catch((error: unknown) => {
+        if (active) setState({ status: 'failed', error });
+      });
+      return () => { active = false; lease.release(); };
+    }
 
     void Promise.resolve()
       .then(start)
@@ -643,7 +670,7 @@ export function ApplicationRuntimeRoot<Runtime extends ApplicationRuntime>({
       owned = null;
       if (runtime !== null) disposeApplicationRuntime(runtime);
     };
-  }, [onReady, start]);
+  }, [onReady, owner, start]);
 
   if (state.status === 'failed') throw state.error;
   if (state.status === 'starting') return fallback;

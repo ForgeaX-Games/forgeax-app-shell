@@ -7,6 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import {
   AppKitError,
   ApplicationRuntimeRoot,
+  createApplicationRuntimeOwner,
   HostProvider,
   defineApp,
   extensionPageMatches,
@@ -81,6 +82,37 @@ describe('application platform public contract', () => {
     act(() => root.unmount());
     expect(disposed).toBe(1);
     root = createRoot(container);
+  });
+
+  it('retains blocked shutdown outside a remounted runtime root until explicit retry', async () => {
+    const deferred = new Error('deferred');
+    const owner = createApplicationRuntimeOwner({ isCleanupDeferred: error => error === deferred });
+    let blocked = true;
+    let started = 0;
+    let cleanup = 0;
+    const start = async () => {
+      const id = ++started;
+      return { host: {} as AppHost, dispose() {
+        if (id === 1) { cleanup++; if (blocked) throw deferred; }
+      } };
+    };
+    const render = () => root.render(
+      <ApplicationRuntimeRoot owner={owner} start={start} fallback={<span>waiting</span>}>
+        {() => <span>ready</span>}
+      </ApplicationRuntimeRoot>,
+    );
+    await act(async () => { render(); });
+    await act(async () => { root.unmount(); });
+    root = createRoot(container);
+    await act(async () => { render(); });
+    expect(started).toBe(1);
+    expect(cleanup).toBe(1);
+    expect(container.textContent).toBe('waiting');
+    blocked = false;
+    await act(async () => { await owner.retryShutdown(); });
+    expect(started).toBe(2);
+    expect(cleanup).toBe(2);
+    expect(container.textContent).toBe('ready');
   });
 
   it('disposes a runtime that resolves after its owner unmounts without rendering stale children', async () => {
