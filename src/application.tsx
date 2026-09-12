@@ -9,6 +9,8 @@ import {
   type RefObject,
 } from 'react';
 import type { DetachedWindowCapability } from './window';
+export { publishTopic, subscribeTopic, peekTopic, clearRetainedTopic, type BusTopics } from './topic-bus';
+export { connectBroadcast, disconnectBroadcast, subscribeBroadcast, getBroadcastStatus, type BroadcastFrame } from './broadcast-stream';
 export { createPanelActionRegistry, type PanelActionRegistry } from './panel-action-registry';
 export { createPanelControlRegistry, type PanelControlRegistry } from './panel-control-registry';
 import type { ApplicationShortcutRegistry } from './application-shortcuts';
