@@ -9,6 +9,19 @@ import {
   type RefObject,
 } from 'react';
 import type { DetachedWindowCapability } from './window';
+export {
+  createApplicationDialogService,
+  applicationDialogs,
+  confirmDialog,
+  alertDialog,
+  unsavedChangesDialog,
+  type ApplicationDialogService,
+  type ApplicationDialogRequest,
+  type ConfirmOptions,
+  type AlertOptions,
+  type UnsavedChangesOptions,
+  type UnsavedChangesDecision,
+} from './application-dialogs';
 export { publishTopic, subscribeTopic, peekTopic, clearRetainedTopic, type BusTopics } from './topic-bus';
 export { connectBroadcast, disconnectBroadcast, subscribeBroadcast, getBroadcastStatus, type BroadcastFrame } from './broadcast-stream';
 export { createPanelActionRegistry, type PanelActionRegistry } from './panel-action-registry';

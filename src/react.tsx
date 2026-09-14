@@ -1,4 +1,5 @@
 import { createElement, type HTMLAttributes, type ReactElement } from 'react';
+export { useApplicationDialogRequest } from './application-dialog-host';
 
 export {
   createIntervalTaskLifecycle,
