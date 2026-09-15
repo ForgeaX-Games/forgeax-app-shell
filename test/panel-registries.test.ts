@@ -5,9 +5,9 @@ test('panel actions preserve synchronous reads, stable sorting, cache and batche
   const registry = createPanelActionRegistry();
   let notifications = 0;
   const unsubscribe = registry.onChange(() => notifications++);
-  const first = { id: 'first', panelId: 'p', command: 'one', order: 2 };
-  const second = { id: 'second', panelId: 'q', command: 'two' };
-  const third = { id: 'third', panelId: 'p', command: 'three', order: 2 };
+  const first = { id: 'first', panelId: 'p', command: 'one', title: 'one', order: 2 };
+  const second = { id: 'second', panelId: 'q', command: 'two', title: 'two' };
+  const third = { id: 'third', panelId: 'p', command: 'three', title: 'three', order: 2 };
   const remove = registry.contribute('owner', [first, second]);
   const removeOther = registry.contribute('owner', [third]);
   expect(registry.all()).toEqual([second, first, third]);

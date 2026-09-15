@@ -1,3 +1,19 @@
+export type * from './panel-renderer-slots';
+import type { PanelEditorBindings, PanelComponentSlots, PanelExtensionTransport } from './panel-renderer-slots';
+export type * from './panel-contributions';
+import type {
+  PanelHeaderDefinition, PanelContentDefinition, PanelActionContribution,
+  PanelControlContribution, PanelActionsApi, PanelControlsApi,
+} from './panel-contributions';
+
+import type { ContextualKeybindingsApi as ApplicationContextualKeybindingsApi } from './contextual-keybindings';
+export { PagePlatformError, PageClosePreparationDeferredError } from "./pages";
+export { createApplicationHost, type ApplicationPageServices, type CreateApplicationHostOptions, type ApplicationHostLogger } from './application-host';
+export { createContextualKeybindings, normalizeKeybinding, normalizeKeyboardEvent, detectKeybindingPlatform,
+  isEditableEventTarget, matchesKeybinding, resolveKeybinding, APPLICATION_KEYBINDING_SCOPE,
+  type ContextualKeybindingsApi as ApplicationContextualKeybindingsApi,
+  type KeybindingPlatform, type KeybindingPreventDefault, type KeybindingContribution, type RegisteredKeybinding,
+  type NormalizedKeyEvent, type KeybindingResolution, type KeybindingHandleResult, type ResolveKeybindingInput } from './contextual-keybindings';
 import {
   createContext,
   useCallback,
@@ -9,6 +25,12 @@ import {
   type RefObject,
 } from 'react';
 import type { DetachedWindowCapability } from './window';
+export {
+  createApplicationExtensionLoader,
+  type ApplicationExtensionControl,
+  type ApplicationExtensionLoader,
+  type ApplicationExtensionManifest,
+} from './application-extension-loader';
 export {
   createApplicationDialogService,
   applicationDialogs,
@@ -97,11 +119,8 @@ export interface KeybindingContext {
   readonly scopes: readonly string[];
 }
 
-export interface ContextualKeybindingsApi {
-  register(binding: KeybindingRegistration): Cleanup;
-  registerScope(element: Element, scopeId: string): Cleanup;
-  dispose(): void;
-}
+/** Public hosts expose the same contextual resolver used by their runtime. */
+export interface ContextualKeybindingsApi extends ApplicationContextualKeybindingsApi {}
 
 export interface EventBus<EventMap extends Record<string, unknown>> {
   emit<Key extends keyof EventMap & string>(topic: Key, payload: EventMap[Key]): void;
@@ -149,29 +168,11 @@ export interface AppBusEventMap extends Record<string, unknown> {
   'capability:removed': { capability: string; provider: string };
 }
 
-export interface SerializedDockview {
-  readonly grid: {
-    readonly height?: number;
-    readonly width?: number;
-    readonly orientation: unknown;
-    readonly root: unknown;
-  };
-  readonly panels: Readonly<Record<string, unknown>>;
-  readonly activeGroup?: string;
-  readonly edgeGroups?: unknown;
-}
-
-export interface PanelHeaderDefinition {
-  readonly visible?: boolean;
-  readonly showTitle?: boolean;
-  readonly subtitle?: string;
-}
-
-export interface PanelContentDefinition {
-  readonly padding?: 'none' | 'sm' | 'md';
-  readonly scroll?: 'none' | 'auto';
-  readonly tone?: 'default' | 'surface' | 'tool';
-}
+export type { SerializedDockview } from 'dockview-core';
+import type { SerializedDockview } from 'dockview-core';
+import type { DockRegion } from './dock';
+export type { DrawerLocationId, DrawerPanelContribution } from './panel-contributions';
+import type { DrawerPanelContribution } from './panel-contributions';
 
 export interface PanelDescriptor {
   readonly id?: string;
@@ -179,62 +180,13 @@ export interface PanelDescriptor {
   readonly order?: number;
   readonly icon?: string;
   readonly when?: () => boolean;
-  readonly defaultRegion?: string;
+  readonly defaultRegion?: DockRegion;
   readonly header?: PanelHeaderDefinition;
   readonly content?: PanelContentDefinition;
   readonly actions?: readonly PanelActionContribution[];
   readonly dockChrome?: { readonly singleTab?: 'default' | 'full' | 'hideTitle' };
   readonly windowing?: DetachedWindowCapability;
-  readonly render?: () => ReactNode;
-}
-
-export type PanelActionLocation = 'header/left' | 'header/center' | 'header/right' | 'context';
-export interface PanelActionContribution {
-  readonly kind?: 'command' | 'menu' | 'control';
-  readonly id: string;
-  readonly panelId: string;
-  readonly command?: string;
-  readonly control?: string;
-  readonly title?: string;
-  readonly label?: string;
-  readonly icon?: string;
-  readonly testId?: string;
-  readonly order?: number;
-  readonly overflowPriority?: number;
-  readonly pinned?: boolean;
-  readonly hideOnOverflow?: boolean;
-  readonly location?: PanelActionLocation;
-  readonly when?: string;
-  readonly enablement?: string;
-  readonly activeWhen?: string;
-  readonly highlightWhen?: string;
-  readonly args?: unknown;
-}
-
-export interface PanelControlRenderContext {
-  readonly panelId: string;
-  readonly actionId: string;
-}
-
-export interface PanelControlContribution {
-  readonly id: string;
-  readonly render: (context: PanelControlRenderContext) => ReactNode;
-}
-
-export interface PanelActionsApi {
-  contribute(owner: string, actions: readonly PanelActionContribution[]): Cleanup;
-  list(panelId: string): readonly PanelActionContribution[];
-  all(): readonly PanelActionContribution[];
-  onChange(listener: () => void): Cleanup;
-  version(): number;
-}
-
-export interface PanelControlsApi {
-  contribute(owner: string, controls: readonly PanelControlContribution[]): Cleanup;
-  get(id: string): PanelControlContribution | undefined;
-  list(): readonly PanelControlContribution[];
-  onChange(listener: () => void): Cleanup;
-  version(): number;
+  readonly render: () => ReactNode;
 }
 
 export type StripLocationId = 'statusbar.left' | 'statusbar.center' | 'statusbar.right';
@@ -257,190 +209,22 @@ export interface PanelRenderers {
   readonly panels?: Readonly<Record<string, PanelDescriptor>>;
   readonly overlays?: Readonly<Record<string, ComponentType | undefined>>;
   readonly surfaces?: Readonly<Record<string, ComponentType | undefined>>;
-  readonly editor?: Readonly<Record<string, unknown>>;
-  readonly drawerPanels?: Readonly<Record<string, unknown>>;
+  readonly editor?: PanelEditorBindings;
+  readonly drawerPanels?: Readonly<Record<string, DrawerPanelContribution>>;
   readonly stripItems?: Readonly<Record<string, StatusItemContribution>>;
   readonly detached?: Readonly<Record<string, ComponentType | undefined>>;
-  readonly slots?: Readonly<Record<string, ComponentType<any> | undefined>>;
-  readonly extensionTransport?: Readonly<Record<string, unknown>>;
+  readonly slots?: PanelComponentSlots;
+  readonly extensionTransport?: PanelExtensionTransport;
   readonly editorPanelIds: readonly string[];
   readonly builtinPageLayouts?: Readonly<Record<string, SerializedDockview>>;
   readonly extensionPanels?: Readonly<Record<string, () => ReactNode>>;
 }
 
-export interface ResourceDescriptor {
-  readonly uri: string;
-  readonly canonicalId: string;
-  readonly kind?: string;
-  readonly displayPath?: string;
-  readonly mime?: string;
-  readonly revision?: string;
-  readonly metadata?: Readonly<Record<string, unknown>>;
-}
+export type { ResourceDescriptor, QualifiedPageTypeId, QualifiedPanelTypeId, QualifiedActivityId, QualifiedResourceEditorId, PageKey, PanelRenderContext, PanelRuntime, PanelTypeRegistration, PagePanelPlacement, PageCloseReason, PageCloseDecision, PageClosePreparation, PageMenuItem, PageController, PageControllerContext, ActivityLocalizedText, ActivityRegistration, ResourceEditorRegistration, ResourceSelector, PageInstance, PageSessionSnapshot, PagePort, PageRegistry, ActivityRegistry, ResourceEditorResolver } from "./pages";
+import type { ResourceDescriptor, QualifiedPageTypeId, QualifiedPanelTypeId, QualifiedActivityId, QualifiedResourceEditorId, PageKey, PanelRenderContext, PanelRuntime, PanelTypeRegistration, PagePanelPlacement, PageCloseReason, PageCloseDecision, PageClosePreparation, PageMenuItem, PageController, PageControllerContext, ActivityLocalizedText, ActivityRegistration, ResourceEditorRegistration, ResourceSelector, PageInstance, PageSessionSnapshot, PagePort, PageRegistry, ActivityRegistry, ResourceEditorResolver } from "./pages";
 
-export type QualifiedPageTypeId = string;
-export type QualifiedPanelTypeId = string;
-export type QualifiedActivityId = string;
-export type QualifiedResourceEditorId = string;
-export type PageKey =
-  | { readonly cardinality: 'singleton'; readonly typeId: string }
-  | { readonly cardinality: 'resource'; readonly typeId: string; readonly resourceId: string }
-  | { readonly cardinality: 'multi-instance'; readonly typeId: string; readonly instanceId: string };
-
-export interface PanelRenderContext {
-  readonly pageKey: PageKey;
-  readonly placementId: string;
-  readonly pageContext: Readonly<Record<string, unknown>>;
-  readonly initialProps?: Readonly<Record<string, unknown>>;
-}
-
-export type PanelRuntime =
-  | { readonly kind: 'inline'; readonly render: (context: PanelRenderContext) => ReactNode }
-  | { readonly kind: 'iframe'; readonly src: string };
-
-export interface PanelTypeRegistration {
-  readonly id: QualifiedPanelTypeId;
-  readonly runtime: PanelRuntime;
-  readonly windowing?: unknown;
-}
-
-export interface PagePanelPlacement {
-  readonly id: string;
-  readonly panelTypeId: QualifiedPanelTypeId;
-  readonly title?: string;
-  readonly optional?: boolean;
-  readonly initialProps?: Readonly<Record<string, unknown>>;
-}
-
-export type PageCloseReason = 'user' | 'extension-disabled' | 'workspace-change' | 'host-dispose';
-export type PageCloseDecision = 'save' | 'discard' | 'cancel';
-export type PageClosePreparation =
-  | { readonly status: 'ready' }
-  | { readonly status: 'dirty'; readonly message?: string }
-  | { readonly status: 'vetoed'; readonly message?: string };
-
-export interface PageMenuItem {
-  readonly id: string;
-  readonly label: string;
-  readonly icon?: string;
-  readonly group?: string;
-  readonly disabled?: boolean;
-  run(): void | Promise<void>;
-}
-
-export interface PageController {
-  prepareClose(reason: PageCloseReason): PageClosePreparation | Promise<PageClosePreparation>;
-  save?(): void | Promise<void>;
-  discard?(): void | Promise<void>;
-  dispose(): void | Promise<void>;
-  getContextMenuItems?(): readonly PageMenuItem[];
-  getTitle?(): string | undefined;
-  subscribeTitle?(listener: () => void): Cleanup;
-}
-
-export interface PageControllerContext {
-  readonly key: PageKey;
-  readonly context: Readonly<Record<string, unknown>>;
-  readonly resource?: ResourceDescriptor;
-}
-
-export interface PageTypeRegistration {
-  readonly id: QualifiedPageTypeId;
-  readonly title: string;
-  readonly cardinality: 'singleton' | 'resource' | 'multi-instance';
-  readonly restorePolicy?: 'never' | 'session' | 'project';
-  readonly closable?: boolean;
-  readonly layoutVersion?: number;
-  readonly layout: unknown;
-  readonly panels: readonly PagePanelPlacement[];
-  readonly createController?: (context: PageControllerContext) => PageController | Promise<PageController>;
-}
-
-export interface ActivityLocalizedText { readonly zh?: string; readonly en?: string; readonly ja?: string }
-export interface ActivityRegistration {
-  readonly id: QualifiedActivityId;
-  readonly title: string;
-  readonly titleI18n?: ActivityLocalizedText;
-  readonly description?: string;
-  readonly descriptionI18n?: ActivityLocalizedText;
-  readonly icon?: string;
-  readonly category?: string;
-  readonly order?: number;
-  readonly sourceLayer?: 'builtin' | 'installed' | 'project' | 'user';
-  readonly pageTypeId?: QualifiedPageTypeId;
-  readonly commandId?: string;
-}
-
-export interface ResourceEditorRegistration {
-  readonly id: QualifiedResourceEditorId;
-  readonly selector: ResourceSelector;
-  readonly pageTypeId: QualifiedPageTypeId;
-  readonly priority?: 'default' | 'optional';
-  readonly sourceLayer?: 'builtin' | 'installed' | 'project' | 'user';
-}
-
-export interface ResourceSelector {
-  readonly schemes?: readonly string[];
-  readonly extensions?: readonly string[];
-  readonly mimeTypes?: readonly string[];
-  readonly kinds?: readonly string[];
-  readonly fallback?: true;
-}
-
-export interface PagePlatformContribution {
-  readonly pageTypes?: readonly PageTypeRegistration[];
-  readonly panelTypes?: readonly PanelTypeRegistration[];
-  readonly activities?: readonly ActivityRegistration[];
-  readonly resourceEditors?: readonly ResourceEditorRegistration[];
-}
-
-export interface PageInstance {
-  readonly key: PageKey;
-  readonly encodedKey: string;
-  readonly typeId: QualifiedPageTypeId;
-  readonly context: Readonly<Record<string, unknown>>;
-  readonly resource?: ResourceDescriptor;
-  readonly openedAt: number;
-  readonly closable: boolean;
-  readonly title?: string;
-}
-
-export interface PageSessionSnapshot {
-  readonly generation: number;
-  readonly activeKey?: string;
-  readonly instances: readonly PageInstance[];
-}
-
-export interface PagePort {
-  open(request: { readonly typeId: QualifiedPageTypeId; readonly resource?: ResourceDescriptor; readonly instanceId?: string; readonly context?: Readonly<Record<string, unknown>> }): Promise<PageKey>;
-  focus(key: PageKey | string): Promise<void>;
-  close(key: PageKey | string, request?: { readonly reason?: PageCloseReason; readonly decision?: PageCloseDecision }): Promise<void>;
-  reorder(key: PageKey | string, toIndex: number): void;
-  getContextMenuItems(key: PageKey | string): readonly PageMenuItem[];
-  getSnapshot(): PageSessionSnapshot;
-  subscribe(listener: () => void): Cleanup;
-}
-
-export interface PageRegistry {
-  get(typeId: QualifiedPageTypeId): unknown;
-  ownerOf(typeId: QualifiedPageTypeId): string | undefined;
-  getSnapshot(): unknown;
-  subscribe(listener: () => void): Cleanup;
-  validateContribution(owner: string, contribution: PagePlatformContribution): void;
-}
-
-export interface ActivityRegistry {
-  getSnapshot(): unknown;
-  subscribe(listener: () => void): Cleanup;
-  launch(id: QualifiedActivityId): Promise<void>;
-}
-
-export interface ResourceEditorResolver {
-  list(resource: ResourceDescriptor): readonly ResourceEditorRegistration[];
-  resolve(resource: ResourceDescriptor): ResourceEditorRegistration | undefined;
-  open(resource: ResourceDescriptor): Promise<PageKey>;
-  setUserAssociation(resource: ResourceDescriptor, editorId: QualifiedResourceEditorId | null): void;
-}
+export type PageTypeRegistration<LegacyLayout = SerializedDockview> = import('./pages').PageTypeRegistration<LegacyLayout>;
+export type PagePlatformContribution<LegacyLayout = SerializedDockview> = import('./pages').PagePlatformContribution<LegacyLayout>;
 
 export type HostCapability = string;
 
@@ -565,12 +349,12 @@ export interface AppExtensionContext {
   contributePagePlatform(contribution: PagePlatformContribution): Cleanup;
 }
 
-export interface AppExtensionContributes {
+export interface AppExtensionContributes<LegacyLayout = SerializedDockview> {
   readonly menus?: readonly ApplicationMenuItem[];
   readonly panels?: Partial<PanelRenderers>;
   readonly panelActions?: readonly PanelActionContribution[];
   readonly panelControls?: readonly PanelControlContribution[];
-  readonly pages?: readonly PageTypeRegistration[];
+  readonly pages?: readonly PageTypeRegistration<LegacyLayout>[];
   readonly panelTypes?: readonly PanelTypeRegistration[];
   readonly activities?: readonly ActivityRegistration[];
   readonly resourceEditors?: readonly ResourceEditorRegistration[];
@@ -791,3 +575,21 @@ export function mountComposition(options: MountOptions): void {
     });
   }
 }
+
+export {
+  installApplicationKeyboardRouter,
+  registerApplicationKeydownHandler,
+  dispatchApplicationKeydownHandlers,
+  isApplicationKeyComposing,
+  type ApplicationKeyboardRouterOptions,
+  type ApplicationKeydownHandler,
+} from './application-keyboard-router';
+
+export {
+  installApplicationNativeMenuBridge,
+  serializeApplicationNativeMenus,
+  type ApplicationNativeMenu,
+  type ApplicationNativeMenuItem,
+  type ApplicationNativeMenuTransport,
+  type ApplicationNativeMenuBridgeOptions,
+} from './application-native-menu';

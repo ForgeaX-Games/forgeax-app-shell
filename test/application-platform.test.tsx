@@ -198,6 +198,7 @@ describe('application platform public contract', () => {
             id: 'material.save',
             panelId: 'material',
             command: 'material.save',
+            title: 'Save material',
             testId: 'material-save',
             overflowPriority: 100,
           }],
@@ -207,7 +208,9 @@ describe('application platform public contract', () => {
     };
 
     expect(key.resourceId).toBe('material:resource');
-    expect(renderers.panels?.material.actions?.[0]?.testId).toBe('material-save');
+    const action = renderers.panels?.material.actions?.[0];
+    expect(action?.kind).not.toBe('control');
+    if (action?.kind !== 'control') expect(action?.testId).toBe('material-save');
   });
 
   it('keeps the structured AppKit manifest and mount failure contract', () => {
