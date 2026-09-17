@@ -127,6 +127,8 @@ export interface PanelEditorBindings {
 }
 
 export interface PanelComponentSlots {
+	/** Product status strip assembly; shared shells may retain a fallback. */
+	StatusBar?: ComponentType;
 	/** MainArea body when app mode is not the SceneEditor mode (i.e., 'ai'). */
 	MainAreaBody?: ComponentType;
 	/** Sidebar's Agents sub-nav body. */

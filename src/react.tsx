@@ -271,3 +271,4 @@ export function ShellSlot({
 }: ShellSlotProps): ReactElement {
   return createElement(as, { ...props, 'data-fx-slot': name });
 }
+export { StatusStrip, type StatusStripProps, type StatusStripSlot } from './status-strip';

@@ -220,6 +220,17 @@ export interface PanelRenderers {
   readonly extensionPanels?: Readonly<Record<string, () => ReactNode>>;
 }
 
+/** Hosts inject their own editor panel manifest; the shared default is empty. */
+export const DEFAULT_EDITOR_PANEL_IDS: readonly string[] = [];
+export const DEFAULT_PANEL_RENDERERS: PanelRenderers = {
+  editorPanelIds: DEFAULT_EDITOR_PANEL_IDS,
+};
+const PanelRenderersContext = createContext<PanelRenderers>(DEFAULT_PANEL_RENDERERS);
+export const PanelRenderersProvider = PanelRenderersContext.Provider;
+export function usePanelRenderers(): PanelRenderers {
+  return useContext(PanelRenderersContext);
+}
+
 export type { ResourceDescriptor, QualifiedPageTypeId, QualifiedPanelTypeId, QualifiedActivityId, QualifiedResourceEditorId, PageKey, PanelRenderContext, PanelRuntime, PanelTypeRegistration, PagePanelPlacement, PageCloseReason, PageCloseDecision, PageClosePreparation, PageMenuItem, PageController, PageControllerContext, ActivityLocalizedText, ActivityRegistration, ResourceEditorRegistration, ResourceSelector, PageInstance, PageSessionSnapshot, PagePort, PageRegistry, ActivityRegistry, ResourceEditorResolver } from "./pages";
 import type { ResourceDescriptor, QualifiedPageTypeId, QualifiedPanelTypeId, QualifiedActivityId, QualifiedResourceEditorId, PageKey, PanelRenderContext, PanelRuntime, PanelTypeRegistration, PagePanelPlacement, PageCloseReason, PageCloseDecision, PageClosePreparation, PageMenuItem, PageController, PageControllerContext, ActivityLocalizedText, ActivityRegistration, ResourceEditorRegistration, ResourceSelector, PageInstance, PageSessionSnapshot, PagePort, PageRegistry, ActivityRegistry, ResourceEditorResolver } from "./pages";
 
