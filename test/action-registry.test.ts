@@ -340,3 +340,16 @@ describe('application action registry public contract', () => {
     expect(changes).toBe(0);
   });
 });
+
+
+test('human-only actions remain in UI discovery but cannot be invoked or discovered by AI', async () => {
+ let calls = 0;
+ registerAction(action('game.switch', {audience:'human',run:()=>{calls++;}}));
+ expect(snapshotActions()).toEqual([]);
+ expect(buildManifest()).toEqual([]);
+ expect(snapshotActions(undefined, undefined, 'human').map(item => item.id)).toEqual(['game.switch']);
+ expect((await dispatchAction('game.switch', {}, {source:'ai'})).status).toBe('rejected');
+ expect(calls).toBe(0);
+ expect((await dispatchAction('game.switch')).status).toBe('completed');
+ expect(calls).toBe(1);
+});

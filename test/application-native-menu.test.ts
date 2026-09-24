@@ -129,7 +129,7 @@ test("disposal before asynchronous listener registration resolves still releases
 	expect(f.payloads).toEqual([]);
 });
 
-test("pending warming cannot publish menus after host disposal", async () => {
+test("publishes static menus before pending warming and fences disposal", async () => {
 	const f = fixture();
 	let resolve!: () => void;
 	f.deps.warmRecentGames = () =>
@@ -141,10 +141,11 @@ test("pending warming cannot publish menus after host disposal", async () => {
 		f.deps,
 	);
 	await settle();
+	expect(f.payloads).toHaveLength(1);
 	dispose();
 	resolve();
 	await settle();
-	expect(f.payloads).toEqual([]);
+	expect(f.payloads).toHaveLength(1);
 });
 
 test("native invocation respects hidden ancestors and current disabled state", async () => {
@@ -254,7 +255,7 @@ test("failed setup releases partial subscriptions and a fresh host can still ins
 		next.deps,
 	);
 	await settle();
-	expect(next.payloads).toHaveLength(1);
+	expect(next.payloads).toHaveLength(2);
 	dispose();
 });
 
@@ -320,4 +321,15 @@ test('native invocation follows product menu order for colliding child IDs', asy
   f.invoke('shared-child');
   expect(commands).toEqual(['file.command']);
   dispose(); f.menus.dispose();
+});
+
+
+test("failed warming leaves synchronous commands installed", async () => {
+ const f = fixture();
+ f.deps.warmRecentGames = async () => {throw new Error("offline");};
+ const dispose = installNativeMenuBridge({menus:f.menus,translate:(key)=>key,execute(){}},f.deps);
+ await settle();
+ expect(f.payloads).toHaveLength(1);
+ expect(f.events).toContain("error:Error: offline");
+ dispose();
 });

@@ -45,6 +45,8 @@ export interface UiActionDef {
   available?: () => true | string;
   /** Whether external tooling should expose this as a first-class action. */
   firstClass?: boolean;
+  /** Human-only actions are excluded from external discovery and invocation. */
+  audience?: 'human';
   /** Client-only dynamic argument choices, omitted from serialized manifests. */
   choices?: Record<string, () => string[] | Promise<string[]>>;
   /** Void becomes completed; thrown/rejected failures become rejected results. */
@@ -163,6 +165,8 @@ export async function dispatchAction(
   const def = actions.get(id);
   if (!def) return done({ status: 'rejected', reason: `unknown action "${id}" (not in the registry)` });
 
+  if (src === 'ai' && def.audience === 'human') return done({ status: 'rejected', reason: 'This action is only available through the user interface.' });
+
   const avail = def.available ? safeAvailable(def) : true;
   if (avail !== true) return done({ status: 'rejected', reason: avail });
 
@@ -203,10 +207,11 @@ export interface UiActionSummary {
 }
 
 /** Lightweight discovery by default; expand schema detail only for named ids. */
-export function snapshotActions(detail?: string, ids?: string[]): UiActionSummary[] {
+export function snapshotActions(detail?: string, ids?: string[], audience: 'human' | 'ai' = 'ai'): UiActionSummary[] {
   const expand = detail === 'schema' ? new Set(ids ?? []) : null;
   const out: UiActionSummary[] = [];
   for (const def of actions.values()) {
+    if (audience === 'ai' && def.audience === 'human') continue;
     const avail = def.available ? safeAvailable(def) : true;
     const row: UiActionSummary = {
       id: def.id,
@@ -240,6 +245,7 @@ export function snapshotState(): Record<string, unknown> {
 export function buildManifest(): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
   for (const def of actions.values()) {
+    if (def.audience === 'human') continue;
     out.push({
       id: def.id,
       title: def.title,

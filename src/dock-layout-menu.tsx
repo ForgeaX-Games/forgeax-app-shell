@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import type { DockLayoutControlState, DockLayoutControlToggleSource } from './dock';
 import { useDockLayoutControlBinding } from './dock-layout-control';
 import { FloatingMenu, type FloatingMenuAnchor } from './floating-menu';
@@ -21,6 +21,7 @@ export interface DockLayoutMenuProps<Anchor extends FloatingMenuAnchor> {
   readonly emptyLabel: ReactNode;
   readonly resetIcon?: ReactNode;
   readonly panels: readonly DockLayoutMenuPanel[];
+  readonly renderPanelActions?: (panel: DockLayoutMenuPanel) => ReactNode;
 }
 
 /**
@@ -41,6 +42,7 @@ export function DockLayoutMenu<Anchor extends FloatingMenuAnchor>({
   emptyLabel,
   resetIcon,
   panels,
+  renderPanelActions,
 }: DockLayoutMenuProps<Anchor>) {
   const { snapshot, panelControl } = useDockLayoutControlBinding({
     state,
@@ -77,8 +79,8 @@ export function DockLayoutMenu<Anchor extends FloatingMenuAnchor>({
       ) : panels.map((panel) => {
         const isOpen = panelControl.isOpen(panel.id);
         return (
+          <Fragment key={panel.id}>
           <button
-            key={panel.id}
             type="button"
             role="menuitemcheckbox"
             aria-checked={isOpen}
@@ -89,6 +91,8 @@ export function DockLayoutMenu<Anchor extends FloatingMenuAnchor>({
             {panel.icon ? <span className="fx-dl-icon" aria-hidden="true">{panel.icon}</span> : null}
             {panel.title}
           </button>
+          {renderPanelActions?.(panel)}
+          </Fragment>
         );
       })}
     </FloatingMenu>

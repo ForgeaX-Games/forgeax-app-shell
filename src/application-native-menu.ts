@@ -172,9 +172,7 @@ export function installApplicationNativeMenuBridge(options: ApplicationNativeMen
 					while (!disposed && dirty) {
 						dirty = false;
 						try {
-							await options.prepare();
-							if (disposed) return;
-							dirty = false;
+
               const payload = serializeApplicationNativeMenus(options.menus.snapshot(), options.menuIds, options.title);
               await transport.publish(payload);
 						} catch (error) {
@@ -189,6 +187,8 @@ export function installApplicationNativeMenuBridge(options: ApplicationNativeMen
 		retain(options.menus.subscribe(refresh));
 		retain(options.subscribeLabels(refresh));
 		refresh();
+		// Install synchronous commands immediately; remote warming must not block menus.
+		void Promise.resolve().then(() => options.prepare()).then(refresh, report);
 	})().catch((error) => {
 		report(error);
 		dispose();
